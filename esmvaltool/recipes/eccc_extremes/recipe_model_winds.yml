@@ -1,0 +1,94 @@
+# ESMValTool
+# recipe_daily_era5.yml
+---
+documentation:
+  description: Create daily ERA5 data
+
+  title: Daily ERA5 data CMORization and creation
+
+  authors:
+    - malinina_elizaveta
+
+  maintainer:
+    - malinina_elizaveta
+
+preprocessors:
+  time:
+    extract_time:
+        start_year: 2008
+        start_month: 1
+        start_day: 2
+        end_year: 2008
+        end_month: 12
+        end_day: 31
+  3hr_to_daily:
+    custom_order: true
+    derive: true  
+    daily_statistics:
+      operator: mean
+    extract_time:
+        start_year: 2008
+        start_month: 1
+        start_day: 2
+        end_year: 2008
+        end_month: 12
+        end_day: 31
+
+daily_datasets: &daily_datasets
+  - {dataset: NICAM16-7S, grid: gr, ensemble: r1i1p1f1} 
+  - {dataset: NICAM16-8S, grid: gr, ensemble: r1i1p1f1} 
+  - {dataset: CMCC-CM2-HR4, grid: gn, ensemble: r1i1p1f1} 
+  - {dataset: CMCC-CM2-VHR4, grid: gn, ensemble: r1i1p1f1} 
+  - {dataset: EC-Earth3P-HR, grid: gr, ensemble: r2i1p1f1} 
+  - {dataset: CNRM-CM6-1-HR, ensemble: r1i1p1f2, grid: gr} 
+  - {dataset: MRI-AGCM3-2-H, ensemble: r1i1p1f1, grid: gn} 
+  - {dataset: MRI-AGCM3-2-S, ensemble: r1i1p1f1, grid: gn}  
+  - {dataset: GFDL-CM4C192, ensemble: r1i1p1f1, grid: gr3} 
+  - {dataset: MPI-ESM1-2-XR, ensemble: r1i1p1f1, grid: gn} 
+
+
+diagnostics:
+  models_daily:
+    description: Compare wind speed derivation for ERA5.
+    scripts: 
+      compare:
+        script: winds/winds_biases.py
+        hours: Daily
+    variables:
+      uas:
+        preprocessor: time
+        mip: day
+        exp: highresSST-present
+        project: CMIP6
+        start_year: 2008
+        start_month: 1
+        start_day: 2 
+        end_year: 2008
+        end_month: 12
+        end_day: 31
+        additional_datasets: *daily_datasets
+      vas:
+        preprocessor: time
+        mip: day
+        exp: highresSST-present
+        project: CMIP6
+        start_year: 2008
+        start_month: 1
+        start_day: 2 
+        end_year: 2008
+        end_month: 12
+        end_day: 31
+        additional_datasets: *daily_datasets
+      real:
+        preprocessor: time
+        short_name: sfcWind
+        mip: day
+        exp: highresSST-present
+        project: CMIP6
+        start_year: 2008
+        start_month: 1
+        start_day: 2 
+        end_year: 2008
+        end_month: 12
+        end_day: 31
+        additional_datasets: *daily_datasets

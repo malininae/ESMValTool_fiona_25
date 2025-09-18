@@ -1,0 +1,307 @@
+# ESMValTool
+# recipe_event_attribution_fiona.yml
+---
+documentation:
+
+  title: Event attribution of the 2022 extratropical storm Fiona. 
+
+  description: This is a recipe for event attribution of the 2022
+               extratropical storm Fiona in Atlantic Canada. 
+               The observational return periods are calculated from 
+               ERA5 and the probability of the event is compared in 
+               different climates based on CMIP6 data. 
+
+  authors:
+    - malinina_elizaveta
+
+preprocessors:
+  preproc_wxx: 
+    custom_order: True
+    extract_season:
+      season: JJASO
+    extract_shape:
+      shapefile: pei_ns_nb_newfoundland.shp
+      method: contains
+      crop: True
+    area_statistics:
+      operator: max
+    annual_statistics:
+      operator: max
+
+  preproc_wx3x: 
+    custom_order: True
+    extract_season:
+      season: JJASO
+    extract_shape:
+      shapefile: pei_ns_nb_newfoundland.shp
+      method: contains
+      crop: True
+    hourly_statistics:
+      hours: 3
+    area_statistics:
+      operator: max
+    annual_statistics:
+      operator: max
+
+  preproc_wx24x: 
+    custom_order: True
+    extract_season:
+      season: JJASO
+    extract_shape:
+      shapefile: pei_ns_nb_newfoundland.shp
+      method: contains
+      crop: True
+    daily_statistics:
+      operator: mean
+    area_statistics:
+      operator: max
+    annual_statistics:
+      operator: max
+
+  preproc_era_gsat: &prep_gsat
+    custom_order: True  
+    area_statistics:
+      operator: mean    
+    annual_statistics:
+      operator: mean
+    anomalies:
+      period: full
+      reference:
+        start_year: 1950
+        start_month: 1
+        start_day: 1
+        end_year: 1979
+        end_month: 12
+        end_day: 31   
+
+  preproc_era_gsat_1979:
+    <<: *prep_gsat
+    extract_time:
+      start_year: 1979
+      start_month: 1
+      start_day: 1
+      end_year: 2023
+      end_month: 12
+      end_day: 31  
+
+dataset_era: &dataset_era
+  - {dataset: ERA5, type: reanaly, version: v1, tier: 3}
+
+diagnostics:
+  observations_1940:
+    description: Calculate event statistic in the observational data
+                 for a selected year and plot the observational figure. 
+                 Similar to figs 3 and 4 and observational info in tab 2 
+                 in Malinina&Gillet (2024). 
+    variables:     
+      obs_data:
+        short_name: sfcWind
+        start_year: 1940
+        end_year: 2023
+        project: OBS6
+        mip: E1hr
+        preprocessor: preproc_wxx 
+        additional_datasets: *dataset_era    
+      obs_covariate:
+        short_name: tas
+        project: OBS6
+        start_year: 1940
+        end_year: 2023
+        mip: Amon
+        preprocessor: preproc_era_gsat 
+        additional_datasets: *dataset_era        
+    scripts:
+      obs:
+        script: eccc_extremes/observational_return_periods.py
+        CI_quantiles: [5, 95] # percentiles for the confidence interval, mandatory parameter
+        mpl_style: malinina24 # optional parameter, defines plot style
+        color_style: malinina24 # optional but hightly recommended, otherwise all lines black
+        yblock: 1 # (optional) determines how many years in block should be pooled in boostrap, default 1
+        region: Atl.Canada # needed for the figure title
+        var_label: wind_speed # needed for axis name
+        analysis_year: 2022 # optional parameter, year for which analysis should be done
+        smooth_covariate_years: 4 # optional parameter if the covariate data should be smoothed
+        covariate_dataset: ERA5 # optional parameter, needed if the extreme dataset doesn't have its own covariate
+        bootstrap_seed: 501 # seed to start sequence for bootstrap (optional, default 1)
+        units: m/s # optional parameter for the labeling
+  observations_1979:
+    description: Calculate event statistic in the observational data
+                 for a selected year and plot the observational figure. 
+                 Similar to figs 3 and 4 and observational info in tab 2 
+                 in Malinina&Gillet (2024). 
+    variables:     
+      obs_data:
+        short_name: sfcWind
+        start_year: 1979
+        end_year: 2023
+        project: OBS6
+        mip: E1hr
+        preprocessor: preproc_wxx 
+        additional_datasets: *dataset_era    
+      obs_covariate:
+        short_name: tas
+        project: OBS6
+        start_year: 1950
+        end_year: 2023
+        mip: Amon
+        preprocessor: preproc_era_gsat_1979 
+        additional_datasets: *dataset_era        
+    scripts:
+      obs:
+        script: eccc_extremes/observational_return_periods.py
+        CI_quantiles: [5, 95] # percentiles for the confidence interval, mandatory parameter
+        mpl_style: malinina24 # optional parameter, defines plot style
+        color_style: malinina24 # optional but hightly recommended, otherwise all lines black
+        yblock: 1 # (optional) determines how many years in block should be pooled in boostrap, default 1
+        region: Atl.Canada # needed for the figure title
+        var_label: wind_speed # needed for axis name
+        analysis_year: 2022 # optional parameter, year for which analysis should be done
+        smooth_covariate_years: 4 # optional parameter if the covariate data should be smoothed
+        covariate_dataset: ERA5 # optional parameter, needed if the extreme dataset doesn't have its own covariate
+        bootstrap_seed: 501 # seed to start sequence for bootstrap (optional, default 1)
+        units: m/s # optional parameter for the labeling
+  observations_3h_1940:
+    description: Calculate event statistic in the observational data
+                 for a selected year and plot the observational figure. 
+                 Similar to figs 3 and 4 and observational info in tab 2 
+                 in Malinina&Gillet (2024). 
+    variables:     
+      obs_data:
+        short_name: sfcWind
+        start_year: 1940
+        end_year: 2023
+        project: OBS6
+        mip: E1hr
+        preprocessor: preproc_wx3x 
+        additional_datasets: *dataset_era    
+      obs_covariate:
+        short_name: tas
+        project: OBS6
+        start_year: 1940
+        end_year: 2023
+        mip: Amon
+        preprocessor: preproc_era_gsat 
+        additional_datasets: *dataset_era        
+    scripts:
+      obs:
+        script: eccc_extremes/observational_return_periods.py
+        CI_quantiles: [5, 95] # percentiles for the confidence interval, mandatory parameter
+        mpl_style: malinina24 # optional parameter, defines plot style
+        color_style: malinina24 # optional but hightly recommended, otherwise all lines black
+        yblock: 1 # (optional) determines how many years in block should be pooled in boostrap, default 1
+        region: Atl.Canada # needed for the figure title
+        var_label: wind_speed # needed for axis name
+        analysis_year: 2022 # optional parameter, year for which analysis should be done
+        smooth_covariate_years: 4 # optional parameter if the covariate data should be smoothed
+        covariate_dataset: ERA5 # optional parameter, needed if the extreme dataset doesn't have its own covariate
+        bootstrap_seed: 501 # seed to start sequence for bootstrap (optional, default 1)
+        units: m/s # optional parameter for the labeling
+  observations_3h_1979:
+    description: Calculate event statistic in the observational data
+                 for a selected year and plot the observational figure. 
+                 Similar to figs 3 and 4 and observational info in tab 2 
+                 in Malinina&Gillet (2024). 
+    variables:     
+      obs_data:
+        short_name: sfcWind
+        start_year: 1979
+        end_year: 2023
+        project: OBS6
+        mip: E1hr
+        preprocessor: preproc_wx3x 
+        additional_datasets: *dataset_era    
+      obs_covariate:
+        short_name: tas
+        project: OBS6
+        start_year: 1950
+        end_year: 2023
+        mip: Amon
+        preprocessor: preproc_era_gsat_1979 
+        additional_datasets: *dataset_era        
+    scripts:
+      obs:
+        script: eccc_extremes/observational_return_periods.py
+        CI_quantiles: [5, 95] # percentiles for the confidence interval, mandatory parameter
+        mpl_style: malinina24 # optional parameter, defines plot style
+        color_style: malinina24 # optional but hightly recommended, otherwise all lines black
+        yblock: 1 # (optional) determines how many years in block should be pooled in boostrap, default 1
+        region: Atl.Canada # needed for the figure title
+        var_label: wind_speed # needed for axis name
+        analysis_year: 2022 # optional parameter, year for which analysis should be done
+        smooth_covariate_years: 4 # optional parameter if the covariate data should be smoothed
+        covariate_dataset: ERA5 # optional parameter, needed if the extreme dataset doesn't have its own covariate
+        bootstrap_seed: 501 # seed to start sequence for bootstrap (optional, default 1)
+        units: m/s # optional parameter for the labeling
+
+  observations_day_1940:
+    description: Calculate event statistic in the observational data
+                 for a selected year and plot the observational figure. 
+                 Similar to figs 3 and 4 and observational info in tab 2 
+                 in Malinina&Gillet (2024). 
+    variables:     
+      obs_data:
+        short_name: sfcWind
+        start_year: 1940
+        end_year: 2023
+        project: OBS6
+        mip: E1hr
+        preprocessor: preproc_wx24x 
+        additional_datasets: *dataset_era    
+      obs_covariate:
+        short_name: tas
+        project: OBS6
+        start_year: 1940
+        end_year: 2023
+        mip: Amon
+        preprocessor: preproc_era_gsat 
+        additional_datasets: *dataset_era        
+    scripts:
+      obs:
+        script: eccc_extremes/observational_return_periods.py
+        CI_quantiles: [5, 95] # percentiles for the confidence interval, mandatory parameter
+        mpl_style: malinina24 # optional parameter, defines plot style
+        color_style: malinina24 # optional but hightly recommended, otherwise all lines black
+        yblock: 1 # (optional) determines how many years in block should be pooled in boostrap, default 1
+        region: Atl.Canada # needed for the figure title
+        var_label: wind_speed # needed for axis name
+        analysis_year: 2022 # optional parameter, year for which analysis should be done
+        smooth_covariate_years: 4 # optional parameter if the covariate data should be smoothed
+        covariate_dataset: ERA5 # optional parameter, needed if the extreme dataset doesn't have its own covariate
+        bootstrap_seed: 501 # seed to start sequence for bootstrap (optional, default 1)
+        units: m/s # optional parameter for the labeling
+  observations_day_1979:
+    description: Calculate event statistic in the observational data
+                 for a selected year and plot the observational figure. 
+                 Similar to figs 3 and 4 and observational info in tab 2 
+                 in Malinina&Gillet (2024). 
+    variables:     
+      obs_data:
+        short_name: sfcWind
+        start_year: 1979
+        end_year: 2023
+        project: OBS6
+        mip: E1hr
+        preprocessor: preproc_wx24x 
+        additional_datasets: *dataset_era    
+      obs_covariate:
+        short_name: tas
+        project: OBS6
+        start_year: 1950
+        end_year: 2023
+        mip: Amon
+        preprocessor: preproc_era_gsat_1979 
+        additional_datasets: *dataset_era        
+    scripts:
+      obs:
+        script: eccc_extremes/observational_return_periods.py
+        CI_quantiles: [5, 95] # percentiles for the confidence interval, mandatory parameter
+        mpl_style: malinina24 # optional parameter, defines plot style
+        color_style: malinina24 # optional but hightly recommended, otherwise all lines black
+        yblock: 1 # (optional) determines how many years in block should be pooled in boostrap, default 1
+        region: Atl.Canada # needed for the figure title
+        var_label: wind_speed # needed for axis name
+        analysis_year: 2022 # optional parameter, year for which analysis should be done
+        smooth_covariate_years: 4 # optional parameter if the covariate data should be smoothed
+        covariate_dataset: ERA5 # optional parameter, needed if the extreme dataset doesn't have its own covariate
+        bootstrap_seed: 501 # seed to start sequence for bootstrap (optional, default 1)
+        units: m/s # optional parameter for the labeling
